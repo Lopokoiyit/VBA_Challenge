@@ -1,0 +1,175 @@
+Attribute VB_Name = "Module1"
+Sub Stock_Market():
+
+' Set Ws as a worksheet object variable.
+    Dim Ws As Worksheet
+    Dim Summary_Table As Boolean
+    Dim Current_Worksheet As Boolean
+    
+    Summary_Table = False
+    Current_Worksheet = True
+    
+    ' Loop through all of the worksheets in the active workbook.
+    For Each Ws In Worksheets
+    
+        ' Set initial variable for holding the ticker name
+        Dim Ticker_Symbol As String
+        Ticker_Symbol = " "
+        
+        ' Set an initial variable for holding the total per ticker name
+        Dim Ticker_Total As Double
+        Ticker_Total = 0
+        
+        ' Set new variables for worksheet
+        Dim Open_Price As Double
+        Open_Price = 0
+        Dim Close_Price As Double
+        Close_Price = 0
+        Dim Price_change As Double
+        Price_change = 0
+        Dim Price_change_percent As Double
+        Price_change_percent = 0
+        ' Set new variables for Part 2
+        Dim Max_Ticker_Symbol As String
+        Max_Ticker_Symbol = " "
+        Dim Min_Ticker_Symbol As String
+        Min_Ticker_Symbol = " "
+        Dim Max_Percent As Double
+        Max_Percent = 0
+        Dim Min_Percent As Double
+        Min_Percent = 0
+        Dim Max_Ticker_Total As String
+        Max_Ticker_Total = " "
+        Dim Max_Volume As Double
+        Max_Volume = 0
+         
+    
+        ' in the summary table for the current worksheet
+        Dim Summary_Table_Row As Long
+        Summary_Table_Row = 2
+        
+        ' Set initial row count for the current worksheet
+        Dim Lastrow As Long
+        Dim i As Long
+        
+        Lastrow = Ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+        ' For all worksheet except the first one
+        If Summary_Table Then
+            ' Set Titles for the Summary Table for current worksheet
+            Ws.Range("I1").Value = "Ticker"
+            Ws.Range("J1").Value = "Yearly Change"
+            Ws.Range("K1").Value = "Percent Change"
+            Ws.Range("L1").Value = "Total Stock Volume"
+            ' Set Additional Titles for new Summary Table
+            Ws.Range("O2").Value = "Greatest % Increase"
+            Ws.Range("O3").Value = "Greatest % Decrease"
+            Ws.Range("O4").Value = "Greatest Total Volume"
+            Ws.Range("P1").Value = "Ticker"
+            Ws.Range("Q1").Value = "Value"
+        Else
+        
+            Summary_Table = True
+        End If
+        
+        ' Define initial value of Open Price for the first Ticker
+        Open_Price = Ws.Cells(2, 3).Value
+        
+        ' Loop from the beginning of the current worksheet till its last row
+        For i = 2 To Lastrow
+        
+            If Ws.Cells(i + 1, 1).Value <> Ws.Cells(i, 1).Value Then
+            
+                Ticker_Symbol = Ws.Cells(i, 1).Value
+                
+                ' Calculate Price_change and Price_change_percent
+                Close_Price = Ws.Cells(i, 6).Value
+                Price_change = Close_Price - Open_Price
+                
+                ' Check Division by 0 condition
+                If Open_Price <> 0 Then
+                    Price_change_percent = (Price_change / Open_Price) * 100
+                Else
+
+                    MsgBox ("For " & Ticker_Symbol & ", Row " & CStr(i) & ": Open Price =" & Open_Price & ". Fix <open> field manually and save.")
+                End If
+                
+                Ticker_Total = Ticker_Total + Ws.Cells(i, 7).Value
+              
+                
+                ' Print the Ticker Name in the Summary Table, Column I
+                Ws.Range("I" & Summary_Table_Row).Value = Ticker_Symbol
+                ' Print the Ticker Name in the Summary Table, Column I
+                Ws.Range("J" & Summary_Table_Row).Value = Price_change
+                ' Fill "Yearly Change", i.e. Price_change with Green and Red colors
+                If (Price_change > 0) Then
+                    'Fill column with GREEN color - good
+                    Ws.Range("J" & Summary_Table_Row).Interior.ColorIndex = 4
+                ElseIf (Price_change <= 0) Then
+                    'Fill column with RED color - bad
+                    Ws.Range("J" & Summary_Table_Row).Interior.ColorIndex = 3
+                End If
+                
+                 ' Print the Ticker Name in the Summary Table, Column I
+                Ws.Range("K" & Summary_Table_Row).Value = (CStr(Price_change_percent) & "%")
+                ' Print the Ticker Name in the Summary Table, Column J
+                Ws.Range("L" & Summary_Table_Row).Value = Ticker_Total
+                
+                ' Add 1 to the summary table row count
+                Summary_Table_Row = Summary_Table_Row + 1
+                ' Reset price_change and Price_change_percent holders, as we will be working with new Ticker
+                Price_change = 0
+                'for loop Price_change_percent = 0
+                Close_Price = 0
+                ' Capture next Ticker's Open_Price
+                Open_Price = Ws.Cells(i + 1, 3).Value
+              
+    'Part 2 of Challenge
+                'Populate new Summary table
+                If (Price_change_percent > Max_Percent) Then
+                    Max_Percent = Price_change_percent
+                    Max_Ticker_Symbol = Ticker_Symbol
+                ElseIf (Price_change_percent < Min_Percent) Then
+                    Min_Percent = Price_change_percent
+                    Min_Ticker_Symbol = Ticker_Symbol
+                End If
+                       
+                If (Ticker_Total > Max_Volume) Then
+                    Max_Volume = Ticker_Total
+                    Max_Ticker_Total = Ticker_Symbol
+                End If
+                
+                'resetting counters
+                Price_change_percent = 0
+                Ticker_Total = 0
+                
+            
+            'Else - If the cell immediately following a row is still the same ticker name,
+            'add to Total Ticker Volume
+            Else
+                ' Increase the Total Ticker Volume
+                Ticker_Total = Ticker_Total + Ws.Cells(i, 7).Value
+            End If
+            
+            ' For debugging MsgBox (Ws.Rows(i).Cells(2, 1))
+      
+        Next i
+
+            ' Record all new counts to the new summary table on the right of the current spreadsheet
+            If Not Current_Worksheet Then
+            
+                Ws.Range("Q2").Value = (CStr(Max_Percent) & "%")
+                Ws.Range("Q3").Value = (CStr(Min_Percent) & "%")
+                Ws.Range("P2").Value = Max_Ticker_Symbol
+                Ws.Range("P3").Value = Min_Ticker_Symbol
+                Ws.Range("Q4").Value = Max_Volume
+                Ws.Range("P4").Value = Max_Ticker_Total
+                
+            Else
+                Current_Worksheet = False
+            End If
+        
+     Next Ws
+End Sub
+
+
